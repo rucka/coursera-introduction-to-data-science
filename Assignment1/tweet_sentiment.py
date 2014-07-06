@@ -2,30 +2,22 @@ import itertools
 import json
 import sys
 
-def hw():
-    print 'Hello, world!'
-
-def lines(fp):
-    print str(len(fp.readlines()))
-
 def prints(items):
-    for i in items:
-        print i
+    i = 0
+    for it in items:
+        i = i + 1
+        #print "(%s) %s"%(i,it)
+        print it
 
 def main():
-    '''
-    sent_file = open(sys.argv[1])
-    tweet_file = open(sys.argv[2])
-    hw()
-    lines(sent_file)
-    lines(tweet_file)
-    '''
-
     scores = extract_scores(sys.argv[1])
     tweets = extract_tweets(sys.argv[2])
 
+    #tweets = tweets[0:10]
+
     sentiments = list(calculate_sentiments(tweets, scores))
     
+    #prints(tweets) 
     prints(sentiments) 
     
 
@@ -44,7 +36,7 @@ def extract_tweets(fp):
            tweet = json.loads(line)
            
            if ('text' in tweet and 'lang' in tweet and tweet.get('lang') == 'en'):
-               text = tweet.get('text')
+               text = tweet.get('text').replace('\n', '<br />')
                items.append(text)
    return items 
 
@@ -54,7 +46,7 @@ def calculate_sentiments(tweets, scores):
         for word in tweet.split(' '):
             if (scores.has_key(word.lower()) == True):
                 sentiment = sentiment + int(scores.get(word.lower()))
-            yield sentiment
+        yield sentiment
 
 
 if __name__ == '__main__':
