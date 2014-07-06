@@ -47,7 +47,7 @@ def calculate_sentiments(tweets, scores):
         for word in tweet.split(' '):
             if (scores.has_key(word.lower()) == True):
                 sentiment = sentiment + int(scores.get(word.lower()))
-            yield sentiment
+        yield sentiment
 def echo(x):
     print x
 
