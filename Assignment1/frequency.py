@@ -13,7 +13,6 @@ def prints(items):
 
 def print_frequencies(frequencies):
     for i in frequencies.keys():
-        #print i + ' ' + str(frequencies[i])
         print ("%s %.6f" %(i, frequencies[i]))
 
 def main():
