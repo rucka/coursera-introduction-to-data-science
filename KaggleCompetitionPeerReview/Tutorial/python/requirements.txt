@@ -1,0 +1,7 @@
+discover
+Numpy
+Scipy
+Pandas
+matplotlib
+ipython
+scikit-learn
