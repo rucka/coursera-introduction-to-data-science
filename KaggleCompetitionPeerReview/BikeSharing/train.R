@@ -85,19 +85,44 @@ ggplot(WeekHour, aes(x=hour, y=weekday)) + geom_tile(aes(fill = count))+ scale_f
 
 #aggregate(count ~ hour + humrange, data=train, FUN=function(x) {sum(x)/length(x)})  
 
-fit <- rpart(count ~ hour + working + atemp + season + weather + humrange + windrange, data=test, method="anova")#, control=rpart.control(minsplit=2, cp=0.02))
-fancyRpartPlot(fit)
-
-test$prediction <- predict(fit)
+#####START PREDICTION#######
+test$prediction <- 0
+fit <- rpart(count ~ hour + working + atemp + season + weather + humrange + windrange, data=train, method="anova", control=rpart.control(minsplit=2, cp=0))
+#fancyRpartPlot(fit)
+test$prediction <- predict(fit, test)
 rmsle(test$count, test$prediction)
+#rmsle: 0.60624 position 305
 
-#rmsle: 0.88818
-
-#create submition file
+#create submit file
 prediction <- predict(fit, testdata)
 submit <- data.frame(datetime = testdata$datetime, count = prediction)
-head(submit)
-submit[submit$datetime > '25/03/2012  01:00:00']
 write.csv(submit, file = "regtree.csv", row.names = FALSE)
 
+#predict registered and casual count
+test$prediction <- 0
+fit.reg <- rpart(registered ~ hour + working + atemp + season + weather + humrange + windrange, data=train, method="anova", control=rpart.control(minsplit=2, cp=0))
+fit.cas <- rpart(casual ~ hour + working + atemp + season + weather + humrange + windrange, data=train, method="anova", control=rpart.control(minsplit=2, cp=0))
+test$prediction.registered = predict(fit.reg, test)
+test$prediction.casual = predict(fit.cas, test)
+test$prediction = test$prediction.registered + test$prediction.casual
+rmsle(test$count, test$prediction)
+
+#create submit file
+prediction.reg <- predict(fit.reg, testdata)
+prediction.cas <- predict(fit.cas, testdata)
+prediction = prediction.cas + prediction.reg
+submit <- data.frame(datetime = testdata$datetime, count = prediction)
+write.csv(submit, file = "regtree_combined.csv", row.names = FALSE)
+
+#use forest
+library(party)
+set.seed(415)
+fit <- cforest(count ~ hour + working + atemp + season + weather + humrange + windrange,
+              data = train, controls=cforest_unbiased(ntree=2000, mtry=3))
+prediction <- predict(fit, test, OOB=TRUE, type = "response")
+rmsle(test$count, test$prediction)
+#create submit file
+prediction <- predict(fit, testdata, OOB=TRUE, type = "response")
+submit <- data.frame(datetime = testdata$datetime, count = prediction)
+write.csv(submit, file = "forest.csv", row.names = FALSE)
 
