@@ -27,7 +27,7 @@ enhancedata <- function (data)
   data$windrange[data$windspeed >= 10 & data$windspeed < 20] <- '10-20'
   data$windrange[data$windspeed >= 20 & data$windspeed < 30] <- '20-30'
   data$windrange[data$windspeed >= 30] <- '30+'
-  data$windrange = as.factor(data$windrange)
+  data$windrange = factor(data$windrange, c(0,1,2,3), ordered=FALSE)
   
   data$humrange[data$humidity < 25] <- '<25'
   data$humrange[data$humidity >= 25 & data$humidity < 50] <- '25-50'
@@ -43,6 +43,13 @@ enhancedata <- function (data)
   data$working = as.factor(data$working)
   
   data$hour = as.numeric(data$datetime$hour)
+  
+  data$season <- factor(data$season, c(1,2,3,4), ordered=FALSE)
+  data$holiday <- factor(data$holiday, c(0,1), ordered=FALSE)
+  data$workingday <- factor(data$workingday, c(0,1), ordered=FALSE)
+  data$weather <- factor(data$weather, c(4,3,2,1), ordered=TRUE)
+  
+  
   return(data)
 } 
 
@@ -118,11 +125,19 @@ write.csv(submit, file = "regtree_combined.csv", row.names = FALSE)
 library(party)
 set.seed(415)
 fit <- cforest(count ~ hour + working + atemp + season + weather + humrange + windrange,
-              data = train, controls=cforest_unbiased(ntree=2000, mtry=3))
+               data = train, controls=cforest_unbiased(ntree=2000, mtry=3))
+#fit <- cforest(count ~ hour + working + atemp + season + weather,
+#               data = train, controls=cforest_unbiased(ntree=2000, mtry=3))
 prediction <- predict(fit, test, OOB=TRUE, type = "response")
 rmsle(test$count, test$prediction)
+
 #create submit file
 prediction <- predict(fit, testdata, OOB=TRUE, type = "response")
+#prediction <- predict(fit, newdata=testdata)
 submit <- data.frame(datetime = testdata$datetime, count = prediction)
 write.csv(submit, file = "forest.csv", row.names = FALSE)
+
+#rfmodel <- randomForest(fol, data = mytrain)
+#rfpredict <- round(predict(rfmodel, newdata = mytest))
+
 
