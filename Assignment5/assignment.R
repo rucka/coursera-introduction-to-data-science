@@ -17,12 +17,19 @@ summary(input$fsc_small)
 
 #Q3 342.1947
 #split data in train and test
-df <- input
-bound <- floor((nrow(df)/2)*1)         #define % of training and test set
-
-df <- df[sample(nrow(df)), ]           #sample rows 
-train <- df[1:bound, ]              #get training set
-test <- df[(bound+1):nrow(df), ] 
+splitdata <- function(data)
+{
+  df <- input
+  bound <- floor((nrow(df)/2)*1)         #define % of training and test set
+  
+  df <- df[sample(nrow(df)), ]           #sample rows 
+  train <- df[1:bound, ]              #get training set
+  test <- df[(bound+1):nrow(df), ] 
+  return (list("train" = train,"test" = test))
+}
+df <- splitdata(input)
+train <- df$train
+test <- df$test
 
 mean(train$time)
 
@@ -30,70 +37,80 @@ mean(train$time)
 library(ggplot2)
 ggplot(input, aes(y=pe,x=chl_small))+ geom_line(aes(group=pop, color=pop),size=2,alpha=0.5)
 
+library(rpart)
+library(e1071)
+library(randomForest)
+
+prediction <- function(train, test)
+{
+  fol <- pop ~ fsc_small + fsc_perp + fsc_big + pe + chl_big + chl_small
+  
+  model <- rpart(fol, method="class", data=train) 
+  predictions <- predict(model, newdata=test, type="class")
+  res = predictions == test$pop
+  err <- sum(res) / nrow(test)
+  rpart_list <- list("model" = model, "predictions" = predictions, "result" = res, "err" = err)
+  
+  model <- randomForest(fol, data=train)
+  predictions <- predict(model, newdata=test, type="class")
+  res = predictions == test$pop
+  err <- sum(res) / nrow(test)
+  rforest_list <- list("model" = model, "predictions" = predictions, "result" = res, "err" = err)
+  
+  model <- svm(fol, data=train)
+  predictions <- predict(model, newdata=test, type="class")
+  res = predictions == test$pop
+  err <- sum(res) / nrow(test)
+  svm_list <- list("model" = model, "predictions" = predictions, "result" = res, "err" = err)
+  
+  return (list("rpart" = rpart_list, "rforest" = rforest_list, "svm" = svm_list))
+}
+result <- prediction(train, test)
+
 #Q5 crypto
 #Q6 5004
 #Q7 pe chl_small
-library(rpart)
-fol <- pop ~ fsc_small + fsc_perp + fsc_big + pe + chl_big + chl_small
-model <- rpart(fol, method="class", data=train)
-print(model)
-#library(rattle)
-#fancyRpartPlot(model)
+print(result$rpart$model)
 
 #Q8 0.8532014
-predictions <- predict(model, newdata=test, type="class")
-#head(predictions)
-res = predictions == test$pop
-sum(res) / nrow(test)
-predictions_rpart <- predictions
+print(result$rpart$err)
 
 #Q9 0.919634
-model <- randomForest(fol, data=train)
-predictions <- predict(model, newdata=test, type="class")
-#View(predictions)
-#head(predictions)
-res = predictions == test$pop
-sum(res) / nrow(test)
-predictions_rforest <- predictions
+#View(result$rforest$predictions)
+print(result$rforest$err)
 
-#Q10 pe chl_small yes
-importance(model)
+#Q10 pe chl_small
+importance(result$rforest$model)
 
 #Q11 0.9182517
-library(e1071)
-model <- svm(fol, data=train)
-predictions <- predict(model, newdata=test, type="class")
-#head(predictions)
-res = predictions == test$pop
-svm_res = sum(res) / nrow(test)
-svm_res
-predictions_svm <- predictions
+print(result$svm$err)
 
 #Q12 ultra is mistaken for pico
-table(pred = predictions_rpart, true = test$pop)
-table(pred = predictions_rforest, true = test$pop)
-table(pred = predictions_svm, true = test$pop)
+table(pred = result$rpart$predictions, true = test$pop)
+table(pred = result$rforest$predictions, true = test$pop)
+table(pred = result$svm$predictions, true = test$pop)
 
 #Q13 fsc_big
-plot(df$fsc_big)
-#plot(df$fsc_small)
-#plot(df$chl_big)
-#plot(df$fsc_perp)
-#plot(df$pe)
-#plot(df$chl_small)
+plot(input$fsc_big)
+#plot(input$fsc_small)
+#plot(input$chl_big)
+#plot(input$fsc_perp)
+#plot(input$pe)
+#plot(input$chl_small)
 
-#Q14 0.0009776823 (wrong)
-df <- input[!(train$file_id == 208),]
-bound <- floor((nrow(df)/2)*1)         #define % of training and test set
+#Q14 0.05247578
+#cleaned_train <- train[!(train$file_id == 208),]
+#cleaned_result <- prediction(cleaned_train, test)
 
-df <- df[sample(nrow(df)), ]           #sample rows 
-train <- df[1:bound, ]              #get training set
-test <- df[(bound+1):nrow(df), ] 
- 
-model <- svm(fol, data=train)
-predictions <- predict(model, newdata=test, type="class")
-#head(predictions)
-res = predictions == test$pop
-svm_res2 = sum(res) / nrow(test)
-(svm_res2 - svm_res)
+#gain <- cleaned_result$svm$err - result$svm$err 
+#print(gain)
+
+#df <- splitdata(input[!(input$file_id == 208),])
+train <- train[!(train$file_id == 208),]
+test <- test[!(test$file_id == 208),]
+cleaned_result <- prediction(train, test)
+
+gain <- cleaned_result$svm$err - result$svm$err 
+print(gain)
+
 
