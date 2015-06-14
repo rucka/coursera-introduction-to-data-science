@@ -11,7 +11,7 @@ getTitle <- function(data) {
   return (data$Title)
 }   
 
-Titanic.path <- "~/Google Drive/Projects/coursera-introduction-to-data-science/KaggleCompetitionPeerReview/Tutorial/R/../data/"
+Titanic.path <- "~/Google Drive/Projects/bigdata/coursera-introduction-to-data-science/KaggleCompetitionPeerReview/Tutorial/R/../data/"
 train.data.file <- "train.csv"
 test.data.file <- "test.csv"
 missing.types <- c("NA", "")

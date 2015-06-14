@@ -1,4 +1,4 @@
-setwd("~/Google Drive/Projects/coursera-introduction-to-data-science/KaggleCompetitionPeerReview/BikeSharing")
+setwd("~/Google Drive/Projects/bigdata/coursera-introduction-to-data-science/KaggleCompetitionPeerReview/BikeSharing")
 traindata <- read.csv("data/train.csv", header=TRUE, stringsAsFactors=FALSE)
 testdata <- read.csv("data/test.csv", header=TRUE, stringsAsFactors=FALSE)
 
